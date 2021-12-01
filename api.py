@@ -22,6 +22,7 @@ class Bairro(Resource):
         return grouped_data
     
     def __make_plot__(self,dataframe, x_axis, y_axis,bairro):
+        plt.figure()
         sns.boxplot(data=dataframe, x=x_axis, y=y_axis)
         plt.savefig(f'boxplot_biblioteca_{bairro}.png')
 

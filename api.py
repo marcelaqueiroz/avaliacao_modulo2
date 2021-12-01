@@ -7,34 +7,35 @@ import pandas as pd
 app = Flask(__name__)
 api = Api(app)
 
-df = pd.read_csv('escolas.csv')
-df.set_index('cod_escola')
+data = pd.read_csv('http://dados.recife.pe.gov.br/dataset/4d3a3b39-9ea9-46ed-bf21-a2670de519c1/resource/7c613836-9edd-4c0f-bc72-495008dd29c3/download/info_unidadesensino_07102021.csv',sep=';', skipinitialspace = True)
+
+data.set_index('cod_escola')
 
 class Bairro(Resource):
-    def group_data(self,dataframe, list_columns):
-      grouped_data = dataframe.groupby(list_columns).agg(
-          total_escolas = ('cod_escola', 'count'),
-          total_turmas = ('qtd_turmas', 'sum'),
-          media_alunos = ('qtd_alunos', 'mean'),
-          media_prof = ('qtd_professores', 'mean')
-          )
-      return grouped_data
+    def __group_data__(self,dataframe, list_columns):
+        grouped_data = dataframe.groupby(list_columns).agg(
+            total_escolas = ('cod_escola', 'count'),
+            total_turmas = ('qtd_turmas', 'sum'),
+            media_alunos = ('qtd_alunos', 'mean'),
+            media_prof = ('qtd_professores', 'mean')
+            )
+        return grouped_data
     
-    def make_plot(self,dataframe, x_axis, y_axis):
-      sns_plot=sns.boxplot(data=dataframe, x=x_axis, y=y_axis)
-      return sns_plot
+    def __make_plot__(self,dataframe, x_axis, y_axis,bairro):
+        sns.boxplot(data=dataframe, x=x_axis, y=y_axis)
+        plt.savefig(f'boxplot_biblioteca_{bairro}.png')
 
     def get(self, bairro):
-        bairro_procurado = (df['bairro'] == bairro.upper())
-        escolas_bairro = df[bairro_procurado]
+        bairro_procurado = (data['bairro'] == bairro.upper())
+        escolas_bairro = data[bairro_procurado]
 
-        grouped_data = self.group_data(escolas_bairro,['bairro','tipo'])
+        grouped_data = self.__group_data__(escolas_bairro,['bairro','tipo'])
 
         grouped_data.to_csv(f'relatorio_escolas_{bairro}.csv')
         grouped_data.to_json(f'relatorio_escolas_{bairro}.json')
 
-        sns_plot =self. make_plot(escolas_bairro,'biblioteca','qtd_alunos')
-        plt.savefig(f'boxplot_biblioteca_{bairro}.png')
+        self.__make_plot__(escolas_bairro,'biblioteca','qtd_alunos',bairro)
+        
 
         return make_response(escolas_bairro.to_json(orient='index',  force_ascii=False))
 
